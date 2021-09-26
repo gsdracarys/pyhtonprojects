@@ -1,0 +1,49 @@
+version: '3.1'
+services:
+    nginx:
+        image: nginx:1.21.3
+        container_name: nginx
+        depends_on:
+            - flask
+        volumes:
+            - ./nginx.conf:/etc/nginx/conf.d/default.conf
+        networks:
+            - my-network
+        ports:
+            - 80:80
+        links: 
+            - db
+    flask:
+        build:
+            context: ./
+            dockerfile: Dockerfile
+        image: flask:0.0.1
+        container_name: flask
+        volumes:
+            - ./app:/app/
+        restart: always
+        environment:
+            - FLASK_APP=/app/main.py
+        command: flask run --host=0.0.0.0
+        networks:
+            my-network:
+                aliases:
+                    - flask-app
+        ports:
+            - 8080:5000
+    db:
+      image: mysql:5.7
+      ports:
+        - "32000:3306"
+      environment:
+        MYSQL_ROOT_PASSWORD: root
+      volumes:
+        - ./db:/docker-entrypoint-initdb.d/:ro
+        - ./mysql_data:/var/lib/mysql
+
+      networks:
+            - my-network
+
+networks:
+    my-network:
+
